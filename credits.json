@@ -1,0 +1,12 @@
+{
+  "remixOf" : [
+    {
+      "name" : "Transcriber",
+      "starter" : "transcriber",
+      "url" : "https://github.com/RooCodeInc/lamp-starter-transcriber"
+    }
+  ],
+  "upstream" : [
+
+  ]
+}
