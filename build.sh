@@ -301,7 +301,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 <plist version="1.0"><dict>
   <key>CFBundleDevelopmentRegion</key><string>en</string>
   <key>CFBundleExecutable</key><string>Transcriber</string>
-  <key>CFBundleIdentifier</key><string>dev.lamp.dev.pensive-curie-69cf17.app.transcriber</string>
+  <key>CFBundleIdentifier</key><string>dev.lamp.dev.app.transcriber</string>
   <key>CFBundleName</key><string>Transcriber</string>
   <key>CFBundleDisplayName</key><string>Transcriber</string>
   <key>CFBundlePackageType</key><string>APPL</string>
@@ -325,6 +325,6 @@ cat > "$APP/Contents/Info.plist" <<PLIST
   <key>NSAppleMusicUsageDescription</key><string>Transcriber plays music from your library.</string>
 </dict></plist>
 PLIST
-intents Transcriber "$APP" "dev.lamp.dev.pensive-curie-69cf17.app.transcriber" Sources
+intents Transcriber "$APP" "dev.lamp.dev.app.transcriber" Sources
 codesign --force -s - "$APP"
 echo "Built $APP"
