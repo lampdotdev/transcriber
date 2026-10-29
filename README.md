@@ -4,21 +4,23 @@
 
 <p align="center">Records meetings, calls and lectures, transcribes them on your Mac, and sums them up.</p>
 
-<p align="center"><a href="#remix-it-with-lamp">Remix it with Lamp</a> · <a href="#build-it-yourself">Build it yourself</a></p>
+<p align="center"><a href="https://lamp.dev/?repo=https://github.com/lampdotdev/transcriber&amp;from=readme"><img src=".github/open-in-lamp.svg" width="164" height="48" alt="Open in Lamp"></a></p>
+
+<p align="center"><a href="#build-it-yourself">Build it yourself</a></p>
 
 <p align="center"><img src=".github/preview.png" width="720" alt="Transcriber"></p>
 
 ## Make Transcriber yours
 
-It's yours to change by asking Lamp. A few places to start:
+Each opens Lamp with a copy of Transcriber and that change, ready to send:
 
-- Show transcripts as chat bubbles
-- Email me the action items
-- Make it a voice diary
+- [Show transcripts as chat bubbles](https://lamp.dev/?repo=https://github.com/lampdotdev/transcriber&from=readme&ask=Show%20transcripts%20as%20chat%20bubbles)
+- [Email me the action items](https://lamp.dev/?repo=https://github.com/lampdotdev/transcriber&from=readme&ask=Email%20me%20the%20action%20items)
+- [Make it a voice diary](https://lamp.dev/?repo=https://github.com/lampdotdev/transcriber&from=readme&ask=Make%20it%20a%20voice%20diary)
 
-## Remix it with Lamp
+## Open it in Lamp
 
-[Lamp](https://lamp.dev) is a Mac app that builds apps from a description and changes them as you ask. In Lamp, choose File → Open from GitHub… and paste `https://github.com/lampdotdev/transcriber`: you get this exact wish, yours to change, with the credits below kept.
+[Lamp](https://lamp.dev) is a Mac app that builds apps from a description and changes them as you ask. [Open Transcriber in Lamp](https://lamp.dev/?repo=https://github.com/lampdotdev/transcriber&from=readme) for a copy of your own, to use and to change as you like, with the credits below kept. Or, in Lamp, choose File → Open from GitHub… and paste `https://github.com/lampdotdev/transcriber`.
 
 ## Build it yourself
 
