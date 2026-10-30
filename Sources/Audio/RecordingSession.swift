@@ -276,6 +276,7 @@ final class RecordingSession: ObservableObject {
             let start = Date().timeIntervalSince(startedAt)
             var words: [Substring] = []
             for word in text.split(separator: " ") {
+                guard !Task.isCancelled, phase == .recording else { return }
                 words.append(word)
                 volatileText = words.joined(separator: " ")
                 scriptPartial = TranscriptLine(start: start, text: volatileText, speaker: speaker)
