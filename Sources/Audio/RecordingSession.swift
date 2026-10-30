@@ -78,6 +78,12 @@ final class RecordingSession: ObservableObject {
         callShares = Array(repeating: 0, count: RecordingSession.meterLength)
         clock = StreamClock()
 
+        if LampShowcase.isOn {
+            startedAt = Date()
+            phase = .recording
+            Task { await playScript() }
+            return
+        }
         guard await Permissions.microphone() else { return fail(.permission(.microphone)) }
         let engine = AVAudioEngine()
         let format = engine.inputNode.outputFormat(forBus: 0)
@@ -177,6 +183,15 @@ final class RecordingSession: ObservableObject {
 
     /// Stops, waits for the last words, and returns the finished recording for the library to keep.
     func stop() async -> Recording? {
+        if LampShowcase.isOn, phase == .recording, let startedAt {
+            let recording = Recording(title: "Recording, " + startedAt.formatted(date: .abbreviated, time: .shortened),
+                                      date: startedAt, duration: Date().timeIntervalSince(startedAt), lines: micLines)
+            hearingCall = false
+            volatileText = ""
+            self.startedAt = nil
+            phase = .idle
+            return recording
+        }
         guard phase == .recording, let engine, let startedAt, let fileName else { return nil }
         phase = .finishing
         engine.inputNode.removeTap(onBus: 0)
@@ -241,6 +256,37 @@ final class RecordingSession: ObservableObject {
         self.startedAt = nil
         phase = .idle
         return recording
+    }
+
+    /// A reel's take (`LampShowcase`): the script's `lines.transcript` heard word by word in place of the microphone
+    /// and the call, each from You or Them by its `speaker`, with the meter moving in that side's color.
+    private func playScript() async {
+        let script = (LampShowcase.script["lines"] as? [String: Any])?["transcript"] as? [[String: Any]] ?? []
+        for entry in script {
+            guard phase == .recording, let startedAt, let text = entry["text"] as? String else { return }
+            let speaker: Speaker = entry["speaker"] as? String == "them" ? .them : .me
+            let start = Date().timeIntervalSince(startedAt)
+            var words: [Substring] = []
+            for word in text.split(separator: " ") {
+                words.append(word)
+                volatileText = words.joined(separator: " ")
+                for _ in 0..<3 {
+                    guard phase == .recording else { return }
+                    hearingCall = true
+                    callLevel = speaker == .them ? Float.random(in: 0.35...0.85) : 0
+                    addLevel(speaker == .me ? Float.random(in: 0.35...0.85) : 0)
+                    try? await Task.sleep(for: .seconds(LampShowcase.wordTime / 3))
+                }
+            }
+            micLines.append(TranscriptLine(start: start, text: text, speaker: speaker))
+            lines = micLines
+            volatileText = ""
+            for _ in 0..<4 {
+                guard phase == .recording else { return }
+                addLevel(0)
+                try? await Task.sleep(for: .seconds(0.1))
+            }
+        }
     }
 
     private func fail(_ problem: Problem) {
