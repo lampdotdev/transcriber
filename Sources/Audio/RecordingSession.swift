@@ -57,6 +57,9 @@ final class RecordingSession: ObservableObject {
     private var callLevel: Float = 0
 
     private var micLines: [TranscriptLine] = []
+    /// A reel's scripted conversation (`playScript`) and the line it's in the middle of.
+    private var script: Task<Void, Never>?
+    private var scriptPartial: TranscriptLine?
     private var micVolatile = ""
     private var callLines: [TranscriptLine] = []
     private var callVolatile = ""
@@ -78,6 +81,12 @@ final class RecordingSession: ObservableObject {
         callShares = Array(repeating: 0, count: RecordingSession.meterLength)
         clock = StreamClock()
 
+        if LampShowcase.isOn {
+            startedAt = Date()
+            phase = .recording
+            script = Task { await playScript() }
+            return
+        }
         guard await Permissions.microphone() else { return fail(.permission(.microphone)) }
         let engine = AVAudioEngine()
         let format = engine.inputNode.outputFormat(forBus: 0)
@@ -177,6 +186,20 @@ final class RecordingSession: ObservableObject {
 
     /// Stops, waits for the last words, and returns the finished recording for the library to keep.
     func stop() async -> Recording? {
+        if LampShowcase.isOn, phase == .recording, let startedAt {
+            script?.cancel()
+            script = nil
+            // The words of the line being heard count, as a recognizer's last partial result would.
+            if let partial = scriptPartial { micLines.append(partial) }
+            scriptPartial = nil
+            let recording = Recording(title: "Recording, " + startedAt.formatted(date: .abbreviated, time: .shortened),
+                                      date: startedAt, duration: Date().timeIntervalSince(startedAt), lines: micLines)
+            hearingCall = false
+            volatileText = ""
+            self.startedAt = nil
+            phase = .idle
+            return recording
+        }
         guard phase == .recording, let engine, let startedAt, let fileName else { return nil }
         phase = .finishing
         engine.inputNode.removeTap(onBus: 0)
@@ -241,6 +264,41 @@ final class RecordingSession: ObservableObject {
         self.startedAt = nil
         phase = .idle
         return recording
+    }
+
+    /// A reel's take (`LampShowcase`): the script's `lines.transcript` heard word by word in place of the microphone
+    /// and the call, each from You or Them by its `speaker`, with the meter moving in that side's color.
+    private func playScript() async {
+        let entries = (LampShowcase.script["lines"] as? [String: Any])?["transcript"] as? [[String: Any]] ?? []
+        for entry in entries {
+            guard !Task.isCancelled, phase == .recording, let startedAt, let text = entry["text"] as? String else { return }
+            let speaker: Speaker = entry["speaker"] as? String == "them" ? .them : .me
+            let start = Date().timeIntervalSince(startedAt)
+            var words: [Substring] = []
+            for word in text.split(separator: " ") {
+                guard !Task.isCancelled, phase == .recording else { return }
+                words.append(word)
+                volatileText = words.joined(separator: " ")
+                scriptPartial = TranscriptLine(start: start, text: volatileText, speaker: speaker)
+                for _ in 0..<3 {
+                    guard !Task.isCancelled, phase == .recording else { return }
+                    hearingCall = true
+                    callLevel = speaker == .them ? Float.random(in: 0.35...0.85) : 0
+                    addLevel(speaker == .me ? Float.random(in: 0.35...0.85) : 0)
+                    try? await Task.sleep(for: .seconds(LampShowcase.wordTime / 3))
+                }
+            }
+            guard !Task.isCancelled else { return }
+            micLines.append(TranscriptLine(start: start, text: text, speaker: speaker))
+            scriptPartial = nil
+            lines = micLines
+            volatileText = ""
+            for _ in 0..<4 {
+                guard !Task.isCancelled, phase == .recording else { return }
+                addLevel(0)
+                try? await Task.sleep(for: .seconds(0.1))
+            }
+        }
     }
 
     private func fail(_ problem: Problem) {
